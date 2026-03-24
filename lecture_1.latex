@@ -1,0 +1,80 @@
+\documentclass[a4paper]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{blindtext}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\usepackage{bbm}
+\usepackage{wrapfig}
+\usepackage{tabularx}
+\usepackage[autostyle=true]{csquotes}
+\graphicspath{ {./images/} }
+\usepackage[bottom=0.5cm, right=1.5cm, left=1.5cm, top=1.5cm]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{exercise}{Exercise}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\p}{\ensuremath{\mathbb{P}}}
+\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\F}{\ensuremath{\mathcal{F}}}
+\newcommand{\1}{\ensuremath{\mathbbm{1}}}
+\newcommand{\B}{\ensuremath{\mathbbm{B}}}
+
+\title{Lecture 1}
+\author{Gidon Rosalki}
+\date{2026-03-24}
+
+
+\begin{document}
+\maketitle
+\section{Introduction}\label{sec:introduction} % (fold)
+\subsection{Grading}\label{sub:grading} % (fold)
+3 coding exercises, in pairs. \textbf{Exercises are not easy}. \begin{itemize}
+    \item Lab 1: 15\%
+    \item Lab 2: 15\%
+    \item Lab 3: 60\%
+    \item Participation / presentation: 10\%
+\end{itemize}
+No exam
+
+Concerning homework, feel free to ask questions, and talk to the lecturers / TAs. We may discuss assignments /
+strategies but do \textbf{not} share code / files, or even look at anyone else's code, since it is very obvious when
+someone has copied. Our code is mostly examined on our understanding of the topic, not necessarily on how well it works.
+We need to be able to \textbf{defend} it.
+% subsection Grading (end)
+
+\subsection{Agenda}\label{sub:agenda} % (fold)
+\begin{itemize}
+    \item Network performance: Latency, bandwidth, congestion 
+    \item User level networking: Kernel bypass, zero-copy 
+    \item RDMA Programming: Verbs, memory registration, queues 
+    \item RDMA Network: InfiniBand, RoCE 
+    \item Introduction to HPC: Parallel systems and Architectures \begin{itemize}
+        \item We will also be discussing building supercomputers, techniques, and how since they are all massive
+            collections of cores, the most serious problem quickly becomes communication between them
+    \end{itemize}
+    \item Collective Communication: Allreduce, broadcast, synchronisation 
+    \item Distributed AI: Training and inference at scale
+\end{itemize}
+
+
+
+% subsection Agenda (end)
+% section Introduction (end)
+
+
+\end{document}
