@@ -118,3 +118,86 @@ So, how do we measure throughput? Very similar to what we did regarding the late
 we send many (say 1000), and at the end, the second computer states that it received. This will enable us to know how
 long it took for all this data to arrive, and we may compute the throughput of the network.
 
+= Acceleration by Offloading
+Offloading is getting someone / something else to do the work. One might offload TCP, where we move IP and TCP
+processing to the NIC (Network Interface Card). The main justification for communication offloading breaks down to 
+- Reduction of host CPU cycles for protocol header processing, checksumming 
+- Fewer CPU interrupts
+- Fewer bytes copied over the memory bus 
+- Potential to offload expensive features such as encryption
+
+This brings us to a new metric to measure! *CPU utilisation*. This is the proportion of time that the CPU is used for
+actual work, since time spent on communication may be considered _wasted_. We bought the processor to waste its time
+multiplying matrices for AI, or perhaps to analyse data, or all manner of useful things. Not generate packet headers. So
+it becomes a rather good idea to offload the work of packet understanding to the NIC.
+
+However, transport offloading may not be enough, since the CPU must still perform a system call, which is incredibly
+expensive, with the context switching, memory copying, and so on. A solution to this is called _U-net_. This is a
+virtual network interface that allows applications to send and receive messages without operating system intervention.
+This moves all buffer management and packet processing to user space, making this a "zero-copy" protocol, since we have
+avoided the memory copy step. Efforts of U-net eventually resulted in the _Virtual Interface Architecture_ (VIA), which
+in turn led to the implementation of various high performance networking stacks such as Infiniband, iWARP, RoCE. These
+are commonly referred to as RDMA (Remote Direct Memory Access) stacks. Infiniband would seem to be the one which
+succeeded the most, at least in the world of consumers. 
+
+== OS bypass & RDMA
+The basic idea is to cut out the middle man. The user level application may directly access the NIC, without going via
+the OS. In the literature, a zero-copy is an operation that does not use any additional memory.
+
+
+=== RDMA standards
+- RDMA is traditionally used for Infiniband networks
+  - Infiniband has a number of vendors, Intel, Qlogic, Mellanox 
+  - It is used extensively in HPC (supercomputers)
+  - Expensive, and requires specialised hardware (physical network and NIC)
+  - Standard is 100GB/s
+
+We all recall the layered model for networking. This is a wonderful system, in a general case. The power of RDMA and
+Infiniband is that it was designed for specific traffic, in specific locations (inside a datacentre), but not for across
+the country. Problem is, getting rid of Ethernet is difficult, especially since it standardised to everywhere, so there
+was a desire for RDMA over Ethernet, such that they get most of the improvement, without the expense of the specialised
+hardware
+- RoCE: RDMA over Ethernet (instead of Infiniband)
+  - RDMA over Converged Ethernet
+  - Still requires specialised hardware, but cheaper since it is only specialised NICs
+  - 40Gb/s (maybe up to 60Gb/s)
+  - RoCE seems to scales worse than Infiniband
+- iWARP
+  - RDMA over TCP, again reducing the amount of specialised hardware
+  - Once again, cheaper, only needs specialised NICs
+  - This has mostly not worked, Gil thinks that there are no companies left that use it 
+- There are lots of arguments over which protocol is preferable. Like everything, I suspect it depends on additional
+  context.
+
+== Data Transfer Model - Work queues
+If we're running RDMA over things like Ethernet, and TCP, we need to discuss how we avoid the OS. To do this, we will
+discuss Work Queues. 
+- Work Request: work items that the hardware should perform
+- Work Completion: When a WR is completed, it may create a Work Completion which provides information about the ended WR
+  (Type, opcode, etc.)
+- Work Queue (WQ): A queue which contains WRs. 
+  - Scheduled for completion by the HR, ordering guaranteed within a single queue, no guarantee about ordering across queues
+  - Adding WR to WQ is called "posting to WQ"
+  - Every WR posted is considered "outstanding" undtil it ends with Work Completion. While outstanding: 
+    - One cannot know if it was scheduled by HW or not 
+    - Send buffers cannot be reused / freed 
+    - Return buffer content cannot be determined
+- Send Queue (SQ)
+  - A WQ that handles sending messages 
+  - Every entry is a Send Request (SR), it specifies: 
+    - How data is used 
+    - What memeory buffers to use (to send or receive data, depending on the opcode)
+    - How much data is sent 
+    - More attributes 
+  - Adding an SR to an SQ is called "posting an SR"
+  - SR may end with a Work Completion
+- Receive Queue (RQ)
+  - A WQ that handles incoming messages 
+  - Every entry is called a Receive Request (RR), which specifies memory buffers to be used 
+  - Adding an RR to the RQ is called "posting an RR"
+  - Always ends with work completion 
+  - May send data as response, depends on opcode
+- Queue Pair (QP)
+  - An object which unifies both SQs, and RQs 
+  - Every queue is independent
+  - Every QP is associated with a Partition Key (P_Key)
