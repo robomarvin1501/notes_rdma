@@ -134,3 +134,85 @@ send reliable data. RD is a fascinating concept, where we reliably send data, to
 exceedingly difficult to create. The RDMA standard did create a standard for Reliable Datagram, but it is incredibly
 difficult to implement, and so nobody uses it in actuality. Essentially all NICs only support RC, UC, and UD, but do not
 bother with RD, and instead use alternatives.
+
+#figure(
+
+)[
+  #table(
+    columns: (auto, auto, auto, auto),
+    align: horizon,
+    table.header([Metric], [UD], [UC], [RC]),
+    "Reliability", "", "", $checkmark$,
+    "Send (with immediate)", $checkmark$, $checkmark$, $checkmark$,
+    "RDMA Write (with immediage)", "", $checkmark$, $checkmark$,
+    "RDMA Read", "", "", $checkmark$,
+    "Atomic operations", "", "", $checkmark$,
+    "Multicast", $checkmark$, "", "",
+    "Max message size", "MTU", $2 "GB"$, $2 "GB"$,
+    "CRC", $checkmark$, $checkmark$, $checkmark$,
+  )
+]
+
+Let us take a moment to consider an HPC system from around 10 years ago, where we buy 10 servers, with say 100 cores
+each, total of 1000 cores across 10 computers. Each has a network card, and is connected, and so on. We may run a
+separate process on each core. At the beginning, we have $10 times 100$ processes, and each may speak with another 1000
+processes. Now, 1000 sockets does not like many, but when you consider that you have 100 processes on a given computer,
+each with 1000 sockets, we now have too many sockets being handled by a single NIC. If we did not have this issue of
+sockets, and the cost of RC, we would always use RC, since it is truly wonderful. There's no need to worry about order,
+or whether or not it will arrive, but we cannot, since there are just too many connections. It simply becomes a massive
+waste of memory, and it reaches a point where for a computer, we are using almost all the resources _purely_ to
+communicate with the neighbours.
+
+Wasting memory on communication becomes a very large problem in connected systems. People dream of reaching 90%
+efficiency, lots of servers in the wild run at 70% efficiency, meaning that 30% is wasted purely on the fact that you
+are working over a distributed system.
+
+= APIs
+
+== Memory Region (MR)
+
+```C 
+struct ibv_mr *ibv_reg_mr (
+  struct ibv_pd *pd, 
+  void *addr, 
+  size_t length, 
+  enum ibv_access_flags access
+)
+```
+This registers a memory buffer with specific permissions. Note the following fields in the ```C ibv_mr``` struct: 
+- ```C lkey``` - The local key of this MR
+- ```C rkey``` - The remote key of this MR
+- ```C addr``` - The start address of the memory buffer that this MR registered
+- ```C length``` - The size of the memory buffer that was registered
+
+```C int ibv_dereg_mr (struct ibv_mr *mr)```: This de-registers an MR.
+This verb should be called if there is no outstanding Send Request, or Receive Request that points to it.
+
+We will note that in contrast to above, we can in fact pin all the memory, since we know what is in fact important here,
+and the OS only sort of does. This works because in HPC, when using a server, only _one_ person is using the server, and
+all others leave it alone, since a single core experiencing a 5% slowdown causes the entire distributed computation to
+experience said slowdown, as they all wait for said core. Gil said that this reaches the level of seriousness that with 
+him at Nvidia, if he's using a server, and someone else logs in, they are fired. 
+
+== Security (tangent)
+We love security, it is very important to us. However, it is hard in HPC, since it comes at a severe performance cost.
+As a result, we make it as secure as we can, as long as it does not affect the results. Ignoring this though, let us
+consider when we have two competing companies using the same hardware, they will naturally encrypt all the disk
+information. This can then be extended into not trusting the data centre itself. The people that built it may be trying
+to steal your data when it is decrypted into the memory / CPU. This brings us to the idea of _confidential computing_.
+Here, we want the memory, the information inside the CPU, everything, to be encrypted at all times. This is a hot topic
+in #link("https://notes-crypto.pages.dev/")[cryptography], and discussed more extensively in my notes there. // TODO link to crypto notes
+There are CPUs that one can buy today which are guaranteed to have confidential computing, and this is the "best" that we
+have today.
+
+
+== Connecting QPs
+Communication should be established between the connected QPs, where each side needs:
+- To know who is the other side 
+- To have information about the other side, and the path there 
+- To configure attributes that describe the send attributes 
+
+Thing is, we need to now how to connect QP X to QP Y, since we cannot transfer the needed information to open the
+connection, before the connection is open. There are 2 solutions to this problem: 
++ Exchange information Out of Band, such as over sockets 
++ Use Communication Manager (CM) *WHICH IS THE CORRECT, AND USED WAY TO CONNECT QPs*
