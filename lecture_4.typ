@@ -145,3 +145,45 @@ tasks while the NIC reads the data across the network. When receiving data, we n
 such as ```c MPI_progress```, to check on the progress of the transfer, but we can choose when to do this, such as when
 we are not doing expensive operations in memory, since this will cause us to lose the data in the cache. We can instead
 do it when we are not in the middle of a matrix multiplication (for example), and not lose vital time in our operations.
+
+= Advanced Offloading
+We are moving on to consider everything in the world of HPC (High Performance Computing). We have created our
+communication methods, with eager which is very good for small messages, and rendezvous for large messages. 
+
+== CORE Direct Technology
+Let us discuss an idea that Gil had about 20 years ago. We know that when we have two operations in a work queue, then
+the second will not start before the first, but that there is no ordering across work queues. Perhaps we want to create
+some sort of dependence between work queues, such as we want to forward information from one host, to another. As we
+have discussed, this requires progress, where the CPU checks the state, to carry out operations accordingly. However, we
+do not want to bother the CPU, but would rather have the NIC handle this all. 
+
+To do this, we need a language, which we may use to define dependencies. We can use this to create a tree of
+dependencies between operations, but does require something new that we have not yet had. Let us suppose that we have a
+WQ, and within a couple of WQEs. Recall the fence concept, which is similar to barrier, where we tell the NIC not to
+move past this point, before everything else reaches this point. Fences are similar to what we want, but does not quite
+do everything. \
+To create these dependencies, we will add a new WQE, with the opcode ```wait```. This will say to wait until the work
+request in another WQ is completed. 
+
+When we consider this in something like gradient descent, which is not particularly expensive, but requires large
+amounts of communication, and still takes months, it turns out that this tree of dependencies does not in fact change
+throughout all this time. So, instead of creating this tree, what we can do is create something called *persistent
+communication*, where we create a template for communication. Despite us starting from these basic verbs, of read,
+write, and so on, this is not in fact important or useful. We are not going to be creating more efficient
+implementations that Intel, Nvidia, or anyone else. When we work with chips, we send information over parallel buses.
+Whenever we want to send a packet, it is not sent over a wide bus, but rather serially, to another machine. Since
+physics is moving slower than compsci, we are now able to create information faster than physics allows us to transport
+it. To demonstrate this, the most powerful computers we can build today are about 40 million times more powerful than they were a decade ago.
+However, communication speed over a fibreoptic has increased by 4 times. Since our ability to communicate is improving
+much more slowly, we need to be clever with how we communicate between our processors. 
+
+Information passing doubles every 2 or three years (or so), but Nvidia creates a new GPU every year. This means in 3
+years, our latest generation will be severely limited by communication speed. To resolve this, we can do something similar
+to CPUs handling Moore's law limitations, where they split processing into multiple CPUs (or cores). Similarly, in this
+networking, instead of making a faster cable, we put multiple cables. For example, on a GPU, instead of connecting it to
+the CPU over a single cable, we use multiple connections, to allow us to communicate faster. This is very standard at
+this point, and we may even use 4 or 8 connections at once. Nvidia created nvlink for communication between GPUs, which
+is around 10 times faster, and achieves this essentially by having more cables connection between the GPUs. 
+
+Rings are work processes, where we arrange our processors in a circle, and each passes the information to the next
+process in the circle (say, to the right). This will be studied extensively, since this will be our final project. 
