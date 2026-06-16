@@ -48,7 +48,7 @@ measure at the level of the basic operations:
 - ips - instructions per second
 - flops - floating point operations per second
 We may also measure the rate at which a benchmark program is executed. This is generally a carefully crafted, and
-controlled piece of code used to compare systems. 
+controlled piece of code used to compare systems.
 - Linpack Rmax
 - gups (billion updates per second)
 I will note that there is a drawback to benchmarks, that sometimes vendors use the benchmark as a target, rather than
@@ -233,7 +233,7 @@ doing. Those that want one sided communication use PGAS instead.
   sources. It is useful for filtering in MPI_Recv. Consider if we have a single channel, we may use tag to multiplex on
   this channel, and allow us to send many different sets of communication over this single channel.
 - Message: A unit of communication, consists of a data buffer, data type, count, source, destination, tag, and
-  communicator. 
+  communicator.
 - Datatype: Describes the type of elements in a message (MPI_INT, MPI_FLOAT). May also define custom datatypes using
   MPI_Type_create_struct.
   Why does the type matter to MPI? Operations like Allreduce may be able to optimise depending on the type.
@@ -243,115 +243,115 @@ In these examples, each table is a table of processors, and data. The processors
 #figure(
   caption: "Broadcast",
   grid(
-  columns: 3, 
-  gutter: 2mm,
-  align: center + horizon,
+    columns: 3,
+    gutter: 2mm,
+    align: center + horizon,
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
         align: horizon,
-        $A_0$, "","","","","",
-        "", "","","","","",
-        "", "","","","","",
-        "", "","","","","",
-        "", "","","","","",
-        "", "","","","","",
+        $A_0$, "", "", "", "", "",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
       )
-    ], 
+    ],
     [Broadcast $==>$],
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
         align: horizon,
-        $A_0$, "","","","","",
-        $A_0$, "","","","","",
-        $A_0$, "","","","","",
-        $A_0$, "","","","","",
-        $A_0$, "","","","","",
-        $A_0$, "","","","","",
+        $A_0$, "", "", "", "", "",
+        $A_0$, "", "", "", "", "",
+        $A_0$, "", "", "", "", "",
+        $A_0$, "", "", "", "", "",
+        $A_0$, "", "", "", "", "",
+        $A_0$, "", "", "", "", "",
       )
-    ]
-  )
+    ],
+  ),
 )
 As we can see, broadcast simply transmits 1 data vector from 1 process, to all the other processes.
 
 #figure(
   caption: "Scatter, and gather",
   grid(
-  columns: 3, 
-  gutter: 2mm,
-  align: center + horizon,
+    columns: 3,
+    gutter: 2mm,
+    align: center + horizon,
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
         align: horizon,
         $A_0$, $A_1$, $A_2$, $A_3$, $A_4$, $A_5$,
-        "", "","","","","",
-        "", "","","","","",
-        "", "","","","","",
-        "", "","","","","",
-        "", "","","","","",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
+        "", "", "", "", "", "",
       )
-    ], 
+    ],
     [Scatter $==>$ \
-     $<==$ Gather],
+      $<==$ Gather],
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
         align: horizon,
-        $A_0$, "","","","","",
-        $A_1$, "","","","","",
-        $A_2$, "","","","","",
-        $A_3$, "","","","","",
-        $A_4$, "","","","","",
-        $A_5$, "","","","","",
+        $A_0$, "", "", "", "", "",
+        $A_1$, "", "", "", "", "",
+        $A_2$, "", "", "", "", "",
+        $A_3$, "", "", "", "", "",
+        $A_4$, "", "", "", "", "",
+        $A_5$, "", "", "", "", "",
       )
-    ]
-  )
+    ],
+  ),
 )
 Scatter splits the vector, and sends the first value to the first processor, the second to the second processor, and so
 on. Gather is in the other direction, where we gather together all the data from all the processes into a single process.
 #figure(
   caption: "Allgather",
   grid(
-  columns: 3, 
-  gutter: 2mm,
-  align: center + horizon,
+    columns: 3,
+    gutter: 2mm,
+    align: center + horizon,
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
         align: horizon,
-        $A_0$, "","","","","",
-        $B_0$, "","","","","",
-        $C_0$, "","","","","",
-        $D_0$, "","","","","",
-        $E_0$, "","","","","",
-        $F_0$, "","","","","",
+        $A_0$, "", "", "", "", "",
+        $B_0$, "", "", "", "", "",
+        $C_0$, "", "", "", "", "",
+        $D_0$, "", "", "", "", "",
+        $E_0$, "", "", "", "", "",
+        $F_0$, "", "", "", "", "",
       )
-    ], 
+    ],
     [Allgather $==>$],
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
         align: horizon,
-        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$, 
-        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$, 
-        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$, 
-        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$, 
-        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$, 
-        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$, 
+        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$,
+        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$,
+        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$,
+        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$,
+        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$,
+        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$,
       )
-    ]
-  )
+    ],
+  ),
 )
-Here, every process has a part of a vector, and we want to gather it, and ensure that the result arrives to everyone. 
+Here, every process has a part of a vector, and we want to gather it, and ensure that the result arrives to everyone.
 
 #figure(
   caption: "Alltoall",
   grid(
-  columns: 3, 
-  gutter: 2mm,
-  align: center + horizon,
+    columns: 3,
+    gutter: 2mm,
+    align: center + horizon,
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
@@ -363,21 +363,21 @@ Here, every process has a part of a vector, and we want to gather it, and ensure
         $E_0$, $E_1$, $E_2$, $E_3$, $E_4$, $E_5$,
         $F_0$, $F_1$, $F_2$, $F_3$, $F_4$, $F_5$,
       )
-    ], 
+    ],
     [Alltoall $==>$],
     [
       #table(
         columns: (2em, 2em, 2em, 2em, 2em, 2em),
         align: horizon,
-        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$, 
-        $A_1$, $B_1$, $C_1$, $D_1$, $E_1$, $F_1$, 
-        $A_2$, $B_2$, $C_2$, $D_2$, $E_2$, $F_2$, 
-        $A_3$, $B_3$, $C_3$, $D_3$, $E_3$, $F_3$, 
-        $A_4$, $B_4$, $C_4$, $D_4$, $E_4$, $F_4$, 
-        $A_5$, $B_5$, $C_5$, $D_5$, $E_5$, $F_5$, 
+        $A_0$, $B_0$, $C_0$, $D_0$, $E_0$, $F_0$,
+        $A_1$, $B_1$, $C_1$, $D_1$, $E_1$, $F_1$,
+        $A_2$, $B_2$, $C_2$, $D_2$, $E_2$, $F_2$,
+        $A_3$, $B_3$, $C_3$, $D_3$, $E_3$, $F_3$,
+        $A_4$, $B_4$, $C_4$, $D_4$, $E_4$, $F_4$,
+        $A_5$, $B_5$, $C_5$, $D_5$, $E_5$, $F_5$,
       )
-    ]
-  )
+    ],
+  ),
 )
 Alltoall is that every process has a vector, and every process does a scatter of its vector, and gathers all the
 vectors. As may be seen above, if we consider the matrix of processes and data, this is like doing a transposition of
@@ -399,7 +399,7 @@ We will use a simple cost model to evaluate the algorithm cost:
 $
   T(n, P) = alpha + beta dot n + gamma dot n
 $
-Where 
+Where
 - $alpha$ is the startup cost, represents the fixed latency overhead associated with initiating any communication
   operation
 - $beta$ is the communication cost, and denotes the inverse bandwidth, representing the per byte transmission time
@@ -419,13 +419,14 @@ computing for aggregating statistics. Implementing this on top of RDMA, for our 
 project.
 
 There are a many different algorithms for implementing allreduce. Each has its own drawbacks, and benefits, and for a slight
-spoiler, we are going to implement ring. 
+spoiler, we are going to implement ring.
 - Ring algorithm: Bandwidth efficient, better for large messages
 - Recursive doubling - good for short messages
 - Rabenseifner's algorithm - hybrid of reduce scatter and allgather
 
+=== Ring
 To detail ring further, each process has an input vector of data, and we need at the end that each process will have the
-sum of all the input vectors in its output vector. For 4 processors, we will begin by splitting our input vectors into 4. 
+sum of all the input vectors in its output vector. For 4 processors, we will begin by splitting our input vectors into 4.
 Every process will take a quarter of the vector (each taking a different quarter), and send it to the next in line in a
 ring. We may now sum together the relevant part of the vector, and send the results to the right once more, meaning what
 we have now sent is the sum of 2 entries, not just one. We now repeat this until every processor now has a quarter of
@@ -434,3 +435,127 @@ output buffer, and send to the right once more. We now do this until everyone ha
 
 Note, this is effectively applying reduce-scatter, and then allgather. Do this division of operations when you write
 your implementation.
+
+This algorithm is the classic application, and until recently, was the only algorithm used in the AI world. We will
+discuss shortly to what it was changed, and why, but first, let us discuss the complexity, and how we measure it. We
+mentioned above the classic cost model, so in our context:
+$
+  (n - 1) dot [alpha + beta (v / n) + gamma]
+$
+Where $v$ is the size of the original vector, and $n$ is the number of processors. This is the initial part of doing the
+computation, but we still need to scatter the data, so we need to add on $(n - 1) dot [alpha + beta (v / n)]$, giving us
+a total of:
+$
+  (n - 1) dot [alpha + beta (v / n) + gamma] + (n - 1) dot [alpha + beta (v / n)] \
+  = 2(n - 1) [1 + beta v / n] + (n - 1) gamma
+$
+This algorithm is bandwidth optimal, since each node may saturate the bandwidth with its neighbours, and it appears to
+not be dependent on $n$. However, $alpha$ is in fact dependent on $n$, so for all this algorithm is bandwidth optimal,
+its latency is less good. As we increase the number of nodes, the latency increases. This is why AI stopped using this
+algorithm, because they started using 10s of thousands of nodes, and the latency of this was beginning to become
+untenable.
+
+=== Scalable Hierarchical Aggregation And Reduction Protocol (SHARP)
+Let us suppose that we want to handle _lots_ of nodes. We will have many nodes connected to switches, and the switches
+connected to more switches, sending information between the nodes. What if we add computational ability to the switch?
+Suppose we have $n / 2$ nodes connected to two switches each, with those switches connected to one parent switch, then
+once these switches receive the $n / 2$ vectors from these hosts, then the switches can do the computation themselves,
+and then pass it on to the parent switch, which connects the two together to a single vector. This single vector may
+then be sent down the tree to all the nodes, where everyone receives the entire vector at the same time, in $O(1)$
+(ignoring the transmission time of the vector). \ 
+So, we have $2 times$ better bandwidth than the optimal ring algorithm, and latency of $O(1)$. We have not broken
+mathematics, simply we broke the rule that computation must be done by hosts. In this course, we will keep to the rules,
+since our lab already exists, and we are not going to modify the switches.
+
+This is a structure in both scale up, and scale out networks. Scale up networks are networks where we add more
+capability locally, and scale out where we add more networks together. Think the difference between making a single
+stronger computer, and connecting together many computers. Inside computers today, we generally do this by adding more
+cores, over a high speed network. Intel have QPI for their high speed network. When it comes to GPUs, Nvidia use NVLINK,
+which can now even be used on the rack level, rather than just the computer level. \
+We want these connections to be as fast as possible, because a cache miss means pulling data over this connection, which
+can be on the order of hundreds of clock cycles, which is a significant amount of money when doing these sorts of
+computations.
+
+=== Returning to AllReduce - Topology Detection
+As above, we can do allreduce over a tree, where we reduce up the tree, and broadcast down the tree. We are mostly going
+to skip this, since Gil would rather speak about AI than this. For now, we are going to speak about detecting
+topologies, and how we map rings to the hardware.
+
+Networks are fairly complex these days. We have already discussed scale up, and scale out. When we buy a server these
+days, it tends to have many compute nodes, be they GPUs, CPUs, etc. The connection within this server is very fast, an
+approximate rule of thumb is that it is $20 times$ faster to communicate with nodes within the server, than to
+communicate with nodes outside the server. Let us consider a box, with 8 processing engines, very high speed
+communication within, and each is connected via a network card to the outside, and may communicate with the other
+internal GPUs _either_ from the local network, or over the external network (though this is not worthwhile). \
+Let us now consider that we have 1000 of these boxes, and we want to do allreduce with these 8000 GPUs. We do not want
+to simply use the low speed network to do this, and we may instead do 8 rings simultaneously. \
+GPU 0 of each box will perform ring with each other, same for GPU 1, and so on, and we pretend that the internal network
+is "free". So, we do these 8 rings simultaneously, and then when its done, each box does its own internal ring, and thus
+the data reaches every compute node.
+
+Nvidia has known for a long time how to make the worlds best GPUs. The reason why Nvidia bought Mellanox is because they
+understood that compute power was not going to be the be all and all of supercomputer processing, but networking was
+becoming the limiting factor, and Mellanox already knew a lot about the networking stack. 
+
+
+= Parallelism
+== Data Parallelism
+We have a couple of ways of applying parallelism, data parallelism vs model parallelism. In data parallelism, the data
+is too large to be computed in one place, so we create many replicas of our AI model, and compute over different parts
+of data in parallel. Model parallelism is that the model is too large, and cannot fit inside a single node, so we split
+it up across many nodes, and compute as a group. \ 
+This is particularly significant at the moment, since we are low on memory in the world, particularly HBM, since we are
+trying to build datacentres at such an unprecedented rate, that the rate at which we can make more memory has not kept
+up, and the time taken to build a new fab is very significant, so we have not been able to increase our production
+ability. This is also not helped by the fact that memory manufacturers are sceptical about AI, and have not even begun
+building new fabs, since there is significant belief in this being a pop-able bubble, and if it pops, its not like they
+can just scale back their memory production to meet demand, once they have increased their ability to produce memory.
+
+When trying to train a model with gradient descent, we do the following loop:
+```
+do {
+  Forward path (activations) - calculate error
+  Backward path  - calculate gradients
+  update network weights (aka optimiser)
+} while error is above threshold / not decreasing anymore
+```
+
+We can apply data initial parallelism, where we split the training across the GPUs, and then need to ad a reduce
+operation, where we take the average gradient from all the GPUs:
+```
+do {
+  Forward path (activations) - calculate error
+  Backward path  - calculate gradients
+  (all) reduce gradients (calculate the average of gradients from different copies)
+  update network weights (aka optimiser)
+} while error is above threshold / not decreasing anymore
+```
+
+We will note that the operation of updating the network weights is a very expensive operation. All the GPUs have the
+same weights vector, and do the same operation, to get the same solution. This is inefficient. Instead, what we can do
+is have each GPU perform the optimisation on its part of the data, before we scatter and reduce the data, and then
+gather the optimised results.
+```
+do {
+  Forward path (activations) - calculate error
+  Backward path  - calculate gradients
+  reduce scatter gradients (calculate the average of gradients from different copies)
+  update network weights (aka optimiser) on the availoable part of the gradient weights
+  all gather weights calculated in each GPU
+} while error is above threshold / not decreasing anymore
+```
+This reduced the number of optimisations by $times n$.
+
+== Pipeline Parallelism
+So, we have 3 operations per parameter, a forward pass, a backward pass, and then allreduce. Allreduce probably takes
+longer than the backward pass, and we are unable to carry out the next forward pass until the previous one has
+completed. Similarly, for the backward pass, we cannot begin until the previous allreduce has completed. This makes
+pipelining these operations difficult.
+
+Let us consider a large job, of dependent data, which is split into 4 parts, followed by a large collective operation,
+such as allreduce. We may instead split each of these parts into 4, and execute the relevant jobs in parallel across our
+GPUs, as described in the below diagram. 
+
+#figure(caption: "Pipeline splitting")[
+  #image("images/lecture_5_pipelining.png", width: 60%)
+]
