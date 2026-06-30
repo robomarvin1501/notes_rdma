@@ -462,7 +462,7 @@ Suppose we have $n / 2$ nodes connected to two switches each, with those switche
 once these switches receive the $n / 2$ vectors from these hosts, then the switches can do the computation themselves,
 and then pass it on to the parent switch, which connects the two together to a single vector. This single vector may
 then be sent down the tree to all the nodes, where everyone receives the entire vector at the same time, in $O(1)$
-(ignoring the transmission time of the vector). \ 
+(ignoring the transmission time of the vector). \
 So, we have $2 times$ better bandwidth than the optimal ring algorithm, and latency of $O(1)$. We have not broken
 mathematics, simply we broke the rule that computation must be done by hosts. In this course, we will keep to the rules,
 since our lab already exists, and we are not going to modify the switches.
@@ -495,7 +495,7 @@ the data reaches every compute node.
 
 Nvidia has known for a long time how to make the worlds best GPUs. The reason why Nvidia bought Mellanox is because they
 understood that compute power was not going to be the be all and all of supercomputer processing, but networking was
-becoming the limiting factor, and Mellanox already knew a lot about the networking stack. 
+becoming the limiting factor, and Mellanox already knew a lot about the networking stack.
 
 
 = Parallelism
@@ -503,7 +503,7 @@ becoming the limiting factor, and Mellanox already knew a lot about the networki
 We have a couple of ways of applying parallelism, data parallelism vs model parallelism. In data parallelism, the data
 is too large to be computed in one place, so we create many replicas of our AI model, and compute over different parts
 of data in parallel. Model parallelism is that the model is too large, and cannot fit inside a single node, so we split
-it up across many nodes, and compute as a group. \ 
+it up across many nodes, and compute as a group. \
 This is particularly significant at the moment, since we are low on memory in the world, particularly HBM, since we are
 trying to build datacentres at such an unprecedented rate, that the rate at which we can make more memory has not kept
 up, and the time taken to build a new fab is very significant, so we have not been able to increase our production
@@ -554,8 +554,119 @@ pipelining these operations difficult.
 
 Let us consider a large job, of dependent data, which is split into 4 parts, followed by a large collective operation,
 such as allreduce. We may instead split each of these parts into 4, and execute the relevant jobs in parallel across our
-GPUs, as described in the below diagram. 
+GPUs, as described in the below diagram.
 
 #figure(caption: "Pipeline splitting")[
   #image("images/lecture_5_pipelining.png", width: 60%)
 ]
+
+This still leaves a bit of a hole, which we may compute. There are all sorts of papers that talk about how this may be
+reduced further (not discussed here). Careful _scheduling_ can help with this. For example, as seen above, doing
+interleaving of the forward and backward path is better than all the forward paths, then all the backward paths.
+
+Then there was another idea. What if we split each device's layer into 5? Then we can supercharge this pipeline. This
+has added additional computation, but it gives so much more interleaving power, with far fewer holes.
+
+#let pipe_comp_img = image("images/lecture_5_pipeline_comp_1.png")
+#figure(caption: "Pipeline splitting")[
+  #box(pipe_comp_img, clip: true, inset: (bottom: -1.6em, left: -2.8em, right: -2.8em, top: -2em))
+]
+
+
+== Distributed GEMM
+This has recently been renamed by AI bros to "tensor parallelism". What a wonderful modern name, good for extracting
+money from VCs.
+
+The idea is splitting matrices, and parallelising across them. We may for example do column parallelism, where we split
+the second matrix into columns, and at the end we concatenate the resultant matrices. We may also do row parallelism,
+where we split by rows, and then add together the result.
+#pagebreak()
+Let us consider carrying out the following multiplication:
+$
+  mat(
+    0, 1, 2, 3;
+    4, 5, 6, 7
+  ) times mat(
+    0, 4;
+    1, 5;
+    2, 6;
+    3, 7
+  ) & = mat(
+        14, 38;
+        38, 126
+      )
+$
+We may carry it out with column parallelism:
+$
+  mat(0, 1, 2, 3; 4, 5, 6, 7) times mat(0; 1; 2; 3) & = mat(14; 38) \
+  mat(0, 1, 2, 3; 4, 5, 6, 7) times mat(4; 5; 6; 7) & = mat(38; 126) \
+                  mat(14; 38) "concat" mat(38; 126) & = mat(
+                                                        14, 38;
+                                                        38, 126
+                                                      )
+$
+Or with row parallelism
+$
+  mat(
+    0, 1;
+    4, 5,
+  ) times mat(
+    0, 4;
+    1, 5;
+  ) & = mat(
+        1, 5;
+        5, 41
+      ) \
+  mat(
+    2, 3;
+    6, 7
+  ) times mat(
+    2, 6;
+    3, 7
+  ) & = mat(
+        13, 33;
+        33, 85
+      ) \
+  mat(
+    1, 5;
+    5, 41
+  ) + mat(
+    13, 33;
+    33, 85
+  ) & = mat(
+        14, 38;
+        38, 126
+      )
+$
+This does require superfast communication, since this has a final operation which is absolutely required, and we may not
+continue before it has completed. Therefore, we only use this technique when working with "scale-up".
+
+#let parallelism_methods = image("images/lecture_5_model_pipeline_data_parallel_1.png")
+#figure(caption: "Pipeline splitting")[
+  #image("images/lecture_5_model_pipeline_data_parallel_1.png", width: 80%)
+]
+Consider a 3D group of GPUs, we may split the model down the $x$ axis, pipeline down the $z$ axis, and then have data
+parallelism up the $y$ axis. So, each layer has a model, split down the $x$, and pipelined down $y$. Model parallelism
+is limited by NVLink, and communication, pipeline by the amount we may split up the model into a pipeline. Data
+parallelism is mostly unlimited, until you fit it into this structure. Data parallelism is most useful in this
+structure, but as a result, we do not tend to see massive data parallelism, since we are limited by the number of GPUs
+that we have.
+
+Technically, the communication between all axes may occur simultaneously. However, to synchronise this collective
+communication is incredibly difficult, so we rarely do it. It is technically possible, but the added difficulty, and
+restrictions by doing it come with significant drawbacks, so it is not worth our while to do this.
+
+= Transformers?
+Transformers have two main features, knowledge and understanding. Knowledge is things like knowing that Michael Jordan
+is an NBA player is kept in the feed forward network. We want to increase the size of the FF, but doing this naïvely is
+just increasing the size of the matrix, which becomes computationally expensive very quickly, and we may want to
+increase the knowledge far faster than we may increase our compute power. \
+A solution to this is that we do not necessarily need the entire knowledge FF at once, we only need a part. Consider,
+that you do not ask a doctor to fix your lighting, but rather an electrician. So, what we do here is split our network
+into many smaller networks, and when a token reaches the networks, it is sent to $x$ of these expert networks instead.
+We may thus increase our parameters, and expertise, without increasing our computation cost. We do increase a memory
+requirement, and training a network like this is a different problem altogether, but this massively reduces the compute
+of both training, and gaining knowledge from the network.
+
+Deciding between these experts is decided with training the experts. What this means is that we train another small
+little network, which receives the tokens, and decides to which expert to send them.
