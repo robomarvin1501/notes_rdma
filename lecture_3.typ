@@ -201,7 +201,7 @@ consider when we have two competing companies using the same hardware, they will
 information. This can then be extended into not trusting the data centre itself. The people that built it may be trying
 to steal your data when it is decrypted into the memory / CPU. This brings us to the idea of _confidential computing_.
 Here, we want the memory, the information inside the CPU, everything, to be encrypted at all times. This is a hot topic
-in #link("https://notes-crypto.pages.dev/")[cryptography], and discussed more extensively in my notes there. // TODO link to crypto notes
+in #link("https://notes-crypto.pages.dev/")[cryptography], and discussed more extensively in my notes there. 
 There are CPUs that one can buy today which are guaranteed to have confidential computing, and this is the "best" that we
 have today.
 
@@ -216,3 +216,43 @@ Thing is, we need to now how to connect QP X to QP Y, since we cannot transfer t
 connection, before the connection is open. There are 2 solutions to this problem:
 + Exchange information Out of Band, such as over sockets
 + Use Communication Manager (CM) *WHICH IS THE CORRECT, AND USED WAY TO CONNECT QPs*
+
+The second method exists through historical reasons, which as is often the case, is a harder method, and gives more
+control. Since it took time for the world to standardise on CM, lots of people (probably even a majority) use Out of
+Band, which seems absurd, but it how it goes. Especially since we use RDMA for explicit use cases, which do not
+necessarily coincide with a good TCP interface, and CM operates in a similar manner to TCP. As a result, it can in fact
+be easier to build something scalable and out high performance using Out of Band, where something that is similar to
+sockets will not be nearly as high performance.
+ 
+The following information needs to be exchanged when connecting QPs:
+- QP number 
+- LID number 
+- RQ packet serial number (PSN)
+- GID (Global ID) (needed if GRH is used)
+The above is true for Infiniband. \
+
+If we instead use Rocky, we need the QP number, MAC instead of LID, and IP instead of GID.\ 
+We also need to ensure that QP and MR are configured to support the same messages, so if we are using RDMA opcodes, it
+needs to be configured accordingly. In each QP transition, the relevant attributes to enable the state functionality
+needs to be configured. 
+
+== Scatter / Gather Elements
+Every Work Request contains usually one or more S/G entry. They are sort of pointers to memory. Every S/G entry refers
+to a Memory Region or part of it. 
+
+We want to minimise the size of our SG list, for optimisation reasons. Often, the memory we want to send is
+noncontinuous, which will increase the size of the SG list. As a result, a common solution is to copy the memory to a
+continuous location, and then send that. This also has performance implications, but it would seem that they are lesser
+than sending a large SG list.
+
+
+= Polling for Work Completion
+This process checks if the processing of a work request has ended. A work completion holds information about the
+corresponding completed work request. There are several attributes:
+- wr_id 
+- status (did it fail?)
+- qp_num
+- vendor_err
+The rest of the fields depend on the QP's transport type, opcode, and status.
+
+
